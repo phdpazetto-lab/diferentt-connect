@@ -18,6 +18,8 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log("Tentando login com:", { nome, senha });
+      
       // Buscar usuário
       const { data: usuario, error } = await supabase
         .from("usuarios")
@@ -26,7 +28,16 @@ const Login = () => {
         .eq("ativo", true)
         .single();
 
-      if (error || !usuario) {
+      console.log("Resposta do banco:", { usuario, error });
+
+      if (error) {
+        console.error("Erro ao buscar usuário:", error);
+        toast.error(`Erro: ${error.message}`);
+        setLoading(false);
+        return;
+      }
+
+      if (!usuario) {
         toast.error("Usuário não encontrado ou inativo");
         setLoading(false);
         return;
