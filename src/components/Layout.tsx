@@ -47,35 +47,35 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const menuItems = [
-    { 
-      label: "Home", 
-      path: "/home", 
-      show: true 
+    {
+      label: "Home",
+      path: "/home",
+      show: true
     },
-    { 
-      label: "Corte", 
-      path: "/corte", 
-      show: usuario?.perm_corte 
+    {
+      label: "Corte",
+      path: "/corte",
+      show: usuario?.perm_corte
     },
-    { 
-      label: "Produto Acabado", 
-      path: "/produto-acabado", 
-      show: usuario?.perm_prod_acabado 
+    {
+      label: "Produto Acabado",
+      path: "/produto-acabado",
+      show: usuario?.perm_prod_acabado
     },
-    { 
-      label: "Pedidos", 
-      path: "/pedidos", 
-      show: usuario?.perm_pedidos 
+    {
+      label: "Pedidos",
+      path: "/pedidos",
+      show: usuario?.perm_pedidos
     },
-    { 
-      label: "Situação & KPIs", 
-      path: "/situacao", 
-      show: usuario?.perm_pedidos 
+    {
+      label: "Situação & KPIs",
+      path: "/situacao",
+      show: usuario?.perm_pedidos
     },
-    { 
-      label: "Estoque", 
-      path: "/estoque", 
-      show: usuario?.perm_consulta 
+    {
+      label: "Estoque",
+      path: "/estoque",
+      show: usuario?.perm_consulta
     },
   ];
 
@@ -127,11 +127,24 @@ const Layout = ({ children }: LayoutProps) => {
           <Button
             variant="ghost"
             onClick={() => navigate("/home")}
-            className="text-lg font-bold text-primary"
+            className="
+      text-base font-semibold tracking-[0.4em]
+      text-gray-600
+      bg-transparent
+      hover:bg-transparent hover:text-gray-900
+      active:bg-transparent active:text-gray-900
+      focus-visible:ring-0
+      select-none
+      transition-transform
+      duration-05s
+      hover:scale-105 active:scale-105
+    "
           >
-            Diferentt
+            D I F E R E N T
           </Button>
         </div>
+
+
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
