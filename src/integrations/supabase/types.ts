@@ -20,6 +20,7 @@ export type Database = {
           created_at: string | null
           data: string
           descricao: string
+          cliente: string | null
           folhas: number
           grade_g: number
           grade_gg: number
@@ -42,6 +43,7 @@ export type Database = {
           created_at?: string | null
           data?: string
           descricao: string
+          cliente?: string | null
           folhas?: number
           grade_g?: number
           grade_gg?: number
@@ -64,6 +66,7 @@ export type Database = {
           created_at?: string | null
           data?: string
           descricao?: string
+          cliente?: string | null
           folhas?: number
           grade_g?: number
           grade_gg?: number
@@ -217,6 +220,7 @@ export type Database = {
           created_at: string | null
           data: string
           descricao: string
+          cliente: string | null
           id: string
           id_corte: string | null
           id_peca: string
@@ -233,6 +237,7 @@ export type Database = {
           created_at?: string | null
           data?: string
           descricao: string
+          cliente?: string | null
           id?: string
           id_corte?: string | null
           id_peca: string
@@ -249,6 +254,7 @@ export type Database = {
           created_at?: string | null
           data?: string
           descricao?: string
+          cliente?: string | null
           id?: string
           id_corte?: string | null
           id_peca?: string

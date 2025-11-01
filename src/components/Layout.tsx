@@ -140,7 +140,7 @@ const Layout = ({ children }: LayoutProps) => {
       hover:scale-105 active:scale-105
     "
           >
-            D I F E R E N T
+            D I F E R E N T T
           </Button>
         </div>
 

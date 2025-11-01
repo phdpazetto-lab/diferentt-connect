@@ -3,6 +3,8 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -21,6 +23,7 @@ interface Pedido {
 const Situacao = () => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
+  const [progresso, setProgresso] = useState<Record<string, { total: number; produzido: number; falta: number; excesso: number }>>({});
 
   useEffect(() => {
     carregarPedidos();
@@ -34,12 +37,72 @@ const Situacao = () => {
         .order("data_entrada", { ascending: false });
 
       if (error) throw error;
-      setPedidos(data || []);
+      const lista = data || [];
+      setPedidos(lista);
+      await carregarProgresso(lista);
     } catch (error) {
       console.error("Erro ao carregar pedidos:", error);
       toast.error("Erro ao carregar pedidos");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarProgresso = async (lista: Pedido[]) => {
+    try {
+      const codigos = lista.map((p) => p.pedido);
+      const clientes = Array.from(new Set(lista.map((p) => p.cliente)));
+
+      const { data: itens, error: errItens } = await supabase
+        .from("pedidos_itens")
+        .select("pedido, id_peca, cor, qtd_pp, qtd_p, qtd_m, qtd_g, qtd_gg, total")
+        .in("pedido", codigos);
+      if (errItens) throw errItens;
+
+      const idsPecas = Array.from(new Set((itens || []).map((i) => i.id_peca)));
+
+      const { data: producao, error: errProd } = await supabase
+        .from("produto_acabado")
+        .select("cliente, id_peca, cor, qtd_pp, qtd_p, qtd_m, qtd_g, qtd_gg, total")
+        .in("cliente", clientes)
+        .in("id_peca", idsPecas);
+      if (errProd) throw errProd;
+
+      const prodKey = (cli: string, ref: string, cor: string | null) => `${cli}||${ref}||${cor || ""}`;
+      const mapaProd = new Map<string, number>();
+      (producao || []).forEach((p: any) => {
+        const k = prodKey(p.cliente || "", p.id_peca, p.cor || "");
+        mapaProd.set(k, (mapaProd.get(k) || 0) + (p.total || 0));
+      });
+
+      const itensPorPedido = new Map<string, any[]>();
+      (itens || []).forEach((i: any) => {
+        if (!itensPorPedido.has(i.pedido)) itensPorPedido.set(i.pedido, []);
+        itensPorPedido.get(i.pedido)!.push(i);
+      });
+
+      const res: Record<string, { total: number; produzido: number; falta: number; excesso: number }> = {};
+      for (const p of lista) {
+        const itensP = itensPorPedido.get(p.pedido) || [];
+        const total = itensP.reduce((s: number, it: any) => s + (it.total || 0), 0);
+        let produzido = 0;
+        itensP.forEach((it: any) => {
+          if (it.cor) {
+            produzido += mapaProd.get(prodKey(p.cliente, it.id_peca, it.cor)) || 0;
+          } else {
+            (producao || [])
+              .filter((x: any) => x.cliente === p.cliente && x.id_peca === it.id_peca)
+              .forEach((x: any) => (produzido += x.total || 0));
+          }
+        });
+        const falta = Math.max(0, total - produzido);
+        const excesso = Math.max(0, produzido - total);
+        res[p.pedido] = { total, produzido, falta, excesso };
+      }
+
+      setProgresso(res);
+    } catch (e) {
+      console.error("Falha ao calcular progresso:", e);
     }
   };
 
@@ -145,6 +208,26 @@ const Situacao = () => {
                         <Badge className={`${kpi.color} text-white`}>{kpi.label}</Badge>
                       </div>
 
+                      {progresso[pedido.pedido] && (
+                        <div className="pt-2">
+                          {(() => {
+                            const pr = progresso[pedido.pedido];
+                            const pct = pr.total > 0 ? Math.min(100, Math.round((pr.produzido / pr.total) * 100)) : 0;
+                            return (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">Produzido</span>
+                                  <span className="font-medium">
+                                    {pr.produzido} de {pr.total} {pr.falta > 0 ? `(Falta ${pr.falta})` : pr.excesso > 0 ? `(Excesso ${pr.excesso})` : ""}
+                                  </span>
+                                </div>
+                                <Progress value={pct} />
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Entrada</p>
@@ -172,15 +255,20 @@ const Situacao = () => {
                       )}
                     </div>
 
-                    {!pedido.data_entrega && (
-                      <Button
-                        size="sm"
-                        onClick={() => marcarEntregue(pedido.id, pedido.pedido)}
-                        className="md:self-center"
-                      >
-                        Marcar entregue
+                    <div className="flex gap-2 md:flex-col">
+                      {!pedido.data_entrega && (
+                        <Button
+                          size="sm"
+                          onClick={() => marcarEntregue(pedido.id, pedido.pedido)}
+                          className="md:self-center"
+                        >
+                          Marcar entregue
+                        </Button>
+                      )}
+                      <Button asChild size="sm" variant="outline" className="md:self-center">
+                        <Link to={`/situacao/${encodeURIComponent(pedido.pedido)}`}>Detalhes</Link>
                       </Button>
-                    )}
+                    </div>
                   </div>
                 </Card>
               );

@@ -13,6 +13,8 @@ interface ItemEstoque {
   tamanhos: string[];
   cores: string[];
   total: number;
+  reservas?: Array<{ cliente: string; total: number }>;
+  totalReservado?: number;
 }
 
 const Estoque = () => {
@@ -100,6 +102,36 @@ const Estoque = () => {
         }
       });
 
+      // Buscar pedidos em aberto (reservas por cliente)
+      const { data: pedidosAbertos, error: errorPedidosAbertos } = await supabase
+        .from("pedidos")
+        .select("pedido, cliente, status")
+        .neq("status", "Entregue");
+
+      if (errorPedidosAbertos) throw errorPedidosAbertos;
+
+      const pedidosAbertosIds = pedidosAbertos?.map((p) => p.pedido) || [];
+
+      const { data: itensAbertos, error: errorItensAbertos } = await supabase
+        .from("pedidos_itens")
+        .select("pedido, id_peca, total")
+        .in("pedido", pedidosAbertosIds);
+
+      if (errorItensAbertos) throw errorItensAbertos;
+
+      // Mapa de reservas por peça -> cliente -> total
+      const reservasPorPeca = new Map<string, Map<string, number>>();
+      const clientePorPedido = new Map<string, string>();
+      pedidosAbertos?.forEach((p) => clientePorPedido.set(p.pedido, p.cliente));
+
+      itensAbertos?.forEach((it) => {
+        const cli = clientePorPedido.get(it.pedido);
+        if (!cli) return;
+        if (!reservasPorPeca.has(it.id_peca)) reservasPorPeca.set(it.id_peca, new Map());
+        const m = reservasPorPeca.get(it.id_peca)!;
+        m.set(cli, (m.get(cli) || 0) + (it.total || 0));
+      });
+
       // Processar e filtrar itens
       const itensEstoque: ItemEstoque[] = [];
 
@@ -126,12 +158,20 @@ const Estoque = () => {
         });
 
         if (totalGeral > 0) {
+          const reservasMap = reservasPorPeca.get(item.id_peca);
+          const reservasArr = reservasMap
+            ? Array.from(reservasMap.entries()).map(([cliente, total]) => ({ cliente, total }))
+            : [];
+          const totalReservado = reservasArr.reduce((s, r) => s + r.total, 0);
+
           itensEstoque.push({
             id_peca: item.id_peca,
             descricao: item.descricao,
             tamanhos: Array.from(tamanhosDisponiveis),
             cores: Array.from(coresDisponiveis),
             total: totalGeral,
+            reservas: reservasArr,
+            totalReservado,
           });
         }
       });
@@ -209,9 +249,24 @@ const Estoque = () => {
                     <p className="font-medium">{item.cores.join(", ")}</p>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">Total em estoque</p>
-                  <p className="text-2xl font-bold text-primary">{item.total}</p>
+                <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total em estoque</p>
+                    <p className="text-2xl font-bold text-primary">{item.total}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Reservado (clientes)</p>
+                    {item.reservas && item.reservas.length > 0 ? (
+                      <div>
+                        <p className="font-semibold">{item.totalReservado}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.reservas.map((r) => `${r.cliente}: ${r.total}`).join(" | ")}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="font-medium">Nenhuma reserva</p>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}

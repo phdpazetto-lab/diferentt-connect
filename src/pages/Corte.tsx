@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import SizeGrid from "@/components/SizeGrid";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ const Corte = () => {
   const [idCorte, setIdCorte] = useState("");
   const [idPeca, setIdPeca] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [cliente, setCliente] = useState("");
   const [gradePP, setGradePP] = useState(0);
   const [gradeP, setGradeP] = useState(0);
   const [gradeM, setGradeM] = useState(0);
@@ -49,6 +51,7 @@ const Corte = () => {
     setIdCorte("");
     setIdPeca("");
     setDescricao("");
+    setCliente("");
     setGradePP(0);
     setGradeP(0);
     setGradeM(0);
@@ -81,6 +84,7 @@ const Corte = () => {
           id_corte: idCorte,
           id_peca: idPeca,
           descricao,
+          cliente: cliente || null,
           cor: corItem.cor,
           grade_pp: gradePP,
           grade_p: gradeP,
@@ -163,60 +167,28 @@ const Corte = () => {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="cliente">Cliente</Label>
+            <Input
+              id="cliente"
+              value={cliente}
+              onChange={(e) => setCliente(e.target.value)}
+              placeholder="Ex: Loja ABC"
+            />
+          </div>
+
           <div>
             <h3 className="font-semibold mb-3">Grade de Tamanhos</h3>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gradePP">PP</Label>
-                <Input
-                  id="gradePP"
-                  type="number"
-                  min="0"
-                  value={gradePP}
-                  onChange={(e) => setGradePP(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gradeP">P</Label>
-                <Input
-                  id="gradeP"
-                  type="number"
-                  min="0"
-                  value={gradeP}
-                  onChange={(e) => setGradeP(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gradeM">M</Label>
-                <Input
-                  id="gradeM"
-                  type="number"
-                  min="0"
-                  value={gradeM}
-                  onChange={(e) => setGradeM(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gradeG">G</Label>
-                <Input
-                  id="gradeG"
-                  type="number"
-                  min="0"
-                  value={gradeG}
-                  onChange={(e) => setGradeG(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gradeGG">GG</Label>
-                <Input
-                  id="gradeGG"
-                  type="number"
-                  min="0"
-                  value={gradeGG}
-                  onChange={(e) => setGradeGG(Number(e.target.value))}
-                />
-              </div>
-            </div>
+            <SizeGrid
+              values={{ pp: gradePP, p: gradeP, m: gradeM, g: gradeG, gg: gradeGG }}
+              onChange={(partial) => {
+                if (partial.pp !== undefined) setGradePP(partial.pp);
+                if (partial.p !== undefined) setGradeP(partial.p);
+                if (partial.m !== undefined) setGradeM(partial.m);
+                if (partial.g !== undefined) setGradeG(partial.g);
+                if (partial.gg !== undefined) setGradeGG(partial.gg);
+              }}
+            />
           </div>
 
           <div>

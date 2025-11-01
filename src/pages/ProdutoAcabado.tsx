@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import SizeGrid from "@/components/SizeGrid";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +24,7 @@ const ProdutoAcabado = () => {
   const [idCorte, setIdCorte] = useState<string>("");
   const [idPeca, setIdPeca] = useState<string>("");
   const [descricao, setDescricao] = useState<string>("");
+  const [cliente, setCliente] = useState<string>("");
   const [observacoes, setObservacoes] = useState<string>("");
 
   // Linha atual que o usuário está preenchendo
@@ -91,6 +93,7 @@ const ProdutoAcabado = () => {
     setIdCorte("");
     setIdPeca("");
     setDescricao("");
+    setCliente("");
     setObservacoes("");
     setLancamentos([]);
     setLancamentoAtual({
@@ -134,6 +137,7 @@ const ProdutoAcabado = () => {
         id_corte: idCorte || null,      // coluna "id_corte"
         id_peca: idPeca,                // coluna "id_peca"
         descricao: descricao,           // coluna "descricao"
+        cliente: cliente || null,       // coluna "cliente"
         cor: lan.cor,                   // coluna "cor"
         qtd_pp,                         // coluna "qtd_pp"
         qtd_p,                          // coluna "qtd_p"
@@ -224,6 +228,15 @@ const ProdutoAcabado = () => {
           </div>
 
           {/* Bloco de lançamentos */}
+          <div className="space-y-2">
+            <Label>Cliente</Label>
+            <Input
+              placeholder="Ex: Loja ABC"
+              value={cliente}
+              onChange={(e) => setCliente(e.target.value)}
+            />
+          </div>
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="font-semibold">Lançamentos</Label>
@@ -240,12 +253,12 @@ const ProdutoAcabado = () => {
             </div>
 
             {/* Linha atual a adicionar */}
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            <div className="space-y-3">
               {/* Cor */}
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <Label>Cor *</Label>
                 <Input
-                  placeholder="Ex: azul"
+                  placeholder="Ex: Azul"
                   value={lancamentoAtual.cor}
                   onChange={(e) =>
                     setLancamentoAtual((prev) => ({
@@ -256,85 +269,22 @@ const ProdutoAcabado = () => {
                 />
               </div>
 
-              {/* PP */}
-              <div className="space-y-2">
-                <Label>PP</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={lancamentoAtual.pp}
-                  onChange={(e) =>
-                    setLancamentoAtual((prev) => ({
-                      ...prev,
-                      pp: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-
-              {/* P */}
-              <div className="space-y-2">
-                <Label>P</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={lancamentoAtual.p}
-                  onChange={(e) =>
-                    setLancamentoAtual((prev) => ({
-                      ...prev,
-                      p: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-
-              {/* M */}
-              <div className="space-y-2">
-                <Label>M</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={lancamentoAtual.m}
-                  onChange={(e) =>
-                    setLancamentoAtual((prev) => ({
-                      ...prev,
-                      m: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-
-              {/* G */}
-              <div className="space-y-2">
-                <Label>G</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={lancamentoAtual.g}
-                  onChange={(e) =>
-                    setLancamentoAtual((prev) => ({
-                      ...prev,
-                      g: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
-
-              {/* GG */}
-              <div className="space-y-2">
-                <Label>GG</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={lancamentoAtual.gg}
-                  onChange={(e) =>
-                    setLancamentoAtual((prev) => ({
-                      ...prev,
-                      gg: Number(e.target.value || 0),
-                    }))
-                  }
-                />
-              </div>
+              {/* Grade PP-P-M-G-GG no formato visual solicitado */}
+              <SizeGrid
+                values={{
+                  pp: lancamentoAtual.pp,
+                  p: lancamentoAtual.p,
+                  m: lancamentoAtual.m,
+                  g: lancamentoAtual.g,
+                  gg: lancamentoAtual.gg,
+                }}
+                onChange={(partial) =>
+                  setLancamentoAtual((prev) => ({
+                    ...prev,
+                    ...partial,
+                  }))
+                }
+              />
             </div>
 
             {/* Lista de lançamentos adicionados */}
